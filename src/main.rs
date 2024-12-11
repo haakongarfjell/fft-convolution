@@ -81,7 +81,7 @@ fn unpad_matrix(matrix: &mut Vec<Vec<Complex>>, original_rows: usize, original_c
 }
 
 
-/// Perform a 1D FFT (Radix-2 DIT) on a vector of Complex numbers
+
 fn fft_1d(data: &mut Vec<Complex>, inverse: bool) {
     let n = data.len();
     if n <= 1 {
@@ -172,9 +172,9 @@ fn load_image(path: &str) -> (Vec<Vec<Complex>>, Vec<Vec<Complex>>, Vec<Vec<Comp
     for y in 0..rows as usize {
         for x in 0..cols as usize {
             let pixel = img.get_pixel(x as u32, y as u32);
-            red_channel[y][x] = Complex::new(pixel[0] as f64 / 255.0, 0.0); // Normalize to [0, 1]
-            green_channel[y][x] = Complex::new(pixel[1] as f64 / 255.0, 0.0); // Normalize to [0, 1]
-            blue_channel[y][x] = Complex::new(pixel[2] as f64 / 255.0, 0.0); // Normalize to [0, 1]
+            red_channel[y][x] = Complex::new(pixel[0] as f64 / 255.0, 0.0); 
+            green_channel[y][x] = Complex::new(pixel[1] as f64 / 255.0, 0.0); 
+            blue_channel[y][x] = Complex::new(pixel[2] as f64 / 255.0, 0.0); 
         }
     }
 
