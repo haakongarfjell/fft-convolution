@@ -81,7 +81,7 @@ fn unpad_matrix(matrix: &mut Vec<Vec<Complex>>, original_rows: usize, original_c
 }
 
 
-
+// Cooley-Tukey FFT algorithm https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
 fn fft_1d(data: &mut Vec<Complex>, inverse: bool) {
     let n = data.len();
     if n <= 1 {
@@ -106,11 +106,16 @@ fn fft_1d(data: &mut Vec<Complex>, inverse: bool) {
         2.0 * PI / n as f64 * -1.0
     };
 
+    // twiddle factor forward: wn = e^(-2*pi*i/n), inverse: wn = e^(2*pi*i/n)
     let w_n = Complex::new(angle.cos(), angle.sin());
     let mut w = Complex::new(1.0, 0.0);
     for i in 0..n / 2 {
+
+        // data[i] = even[i] + w * odd[i]
         let t = w.mul(&odd[i]);
         data[i] = even[i].add(&t);
+
+        // data[i + n / 2] = even[i] - w * odd[i]
         data[i + n / 2] = even[i].sub(&t);
         w = w.mul(&w_n);
     }
