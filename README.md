@@ -1,11 +1,11 @@
 # fft-convolution
 
-Convolve an image with a gaussian kernel using the fast fourier transform. 
+Convolve an image with a kernel matrix (csv-file).
 
-Specify relative path to input image, output image and gaussian variance $\sigma$.
+Specify relative path to input image, kernel and output image
 
 Example:
 
 ```
-cargo run --release input/ole_ivars.jpg output/ole_ivars_blurred.jpg 10
+cargo run --release input/ole_ivars.jpg gaussian_kernels/sigma_64.csv output/ole_ivars_blurred.jpg
 ```
