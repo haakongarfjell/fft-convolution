@@ -1,5 +1,6 @@
 use std::f64::consts::PI;
 use std::env;
+use csv::{ReaderBuilder, WriterBuilder};
 
 use image::{ImageBuffer, ImageReader, Rgb};
 
@@ -208,33 +209,33 @@ fn save_image(path: &str, red_channel: &Vec<Vec<Complex>>, green_channel: &Vec<V
     let _ = img_buffer.save(path);
 }
 
-fn generate_gaussian_kernel(sigma: f32) -> Vec<Vec<f32>> {
-    let size = 2 * (sigma * 3.0) as usize + 1;
-    let mut kernel = vec![vec![0.0; size]; size];
-    let center = size as isize / 2;
-    let two_sigma_sq = 2.0 * sigma * sigma;
-    let mut sum = 0.0;
+// fn generate_gaussian_kernel(sigma: f32) -> Vec<Vec<f32>> {
+//     let size = 2 * (sigma * 3.0) as usize + 1;
+//     let mut kernel = vec![vec![0.0; size]; size];
+//     let center = size as isize / 2;
+//     let two_sigma_sq = 2.0 * sigma * sigma;
+//     let mut sum = 0.0;
 
-    for i in 0..size {
-        for j in 0..size {
-            let x = i as isize - center;
-            let y = j as isize - center;
-            kernel[i][j] = (-((x * x + y * y) as f32) / two_sigma_sq).exp();
-            sum += kernel[i][j];
-        }
-    }
+//     for i in 0..size {
+//         for j in 0..size {
+//             let x = i as isize - center;
+//             let y = j as isize - center;
+//             kernel[i][j] = (-((x * x + y * y) as f32) / two_sigma_sq).exp();
+//             sum += kernel[i][j];
+//         }
+//     }
 
-    // Normalize
-    for i in 0..size {
-        for j in 0..size {
-            kernel[i][j] /= sum;
-        }
-    }
+//     // Normalize
+//     for i in 0..size {
+//         for j in 0..size {
+//             kernel[i][j] /= sum;
+//         }
+//     }
 
-    println!("Generated Gaussian Kernel with sigma = {} and size = {}", sigma, size);
+//     println!("Generated Gaussian Kernel with sigma = {} and size = {}", sigma, size);
 
-    kernel
-}
+//     kernel
+// }
 
 fn fftshift(matrix: &mut Vec<Vec<Complex>>) {
     let rows = matrix.len();
@@ -288,21 +289,54 @@ fn convolve(channel: &mut Vec<Vec<Complex>>, kernel: &Vec<Vec<Complex>>) {
     }
 }
 
+// fn save_kernel(path: &str, kernel: &Vec<Vec<f32>>) {
+//     let mut writer = WriterBuilder::new().from_path(path).expect("Failed to create CSV writer");
+
+//     for row in kernel.iter() {
+//         writer
+//             .write_record(row.iter().map(|x| x.to_string()))
+//             .expect("Failed to write record");
+//     }
+
+//     writer.flush().expect("Failed to flush CSV writer");
+// }
+
+fn load_kernel(path: &str) -> Vec<Vec<f32>> {
+    let mut reader = ReaderBuilder::new()
+        .has_headers(false)
+        .from_path(path)
+        .expect("Failed to create CSV reader");
+
+    let mut kernel = Vec::new();
+    for result in reader.records() {
+        let record = result.expect("Failed to read record");
+        let row: Vec<f32> = record
+            .iter()
+            .map(|x| x.parse().expect("Failed to parse record"))
+            .collect();
+        kernel.push(row);
+    }
+
+    kernel
+}
+
+
 fn main() {
     let input_path = env::args().nth(1).expect("Provide relative path to image");
-    let output_path = env::args().nth(2).expect("Provide relative path to output image");
-    let sigma: f32 = env::args()
-        .nth(3)
-        .expect("Provide sigma value.")
-        .parse()
-        .expect("Enter a valid value.");
+    let kernel_path = env::args().nth(2).expect("Provide relative path to kernel");
+    let output_path = env::args().nth(3).expect("Provide relative path to output image");
 
     let current_dir = env::current_dir().expect("Failed to get directory");
 
     let input_path_full = current_dir.join(input_path);
     let output_path_full = current_dir.join(output_path);
+    let kernel_path_full = current_dir.join(kernel_path);
 
     let (mut red_channel, mut green_channel, mut blue_channel) = load_image(input_path_full.to_str().unwrap());
+    let filter_kernel = load_kernel(kernel_path_full.to_str().unwrap());
+
+    println!("{} image size: {}x{}", "Input", red_channel.len(), red_channel[0].len());
+    println!("{} kernel size: {}x{}", "Filter", filter_kernel.len(), filter_kernel[0].len());
 
 
 
@@ -311,9 +345,9 @@ fn main() {
     let (original_rows_g, original_cols_g) = pad_matrix(&mut green_channel);
     let (original_rows_b, original_cols_b) = pad_matrix(&mut blue_channel);
 
-    let gaussian_kernel = generate_gaussian_kernel(sigma);
+    //let gaussian_kernel = generate_gaussian_kernel(sigma);
 
-    let mut center_padded_kernel = center_and_pad_kernel(gaussian_kernel, original_rows_r, original_cols_r);
+    let mut center_padded_kernel = center_and_pad_kernel(filter_kernel, original_rows_r, original_cols_r);
 
     let (_orignal_rows_kernel, _original_cols_kernel) = pad_matrix(&mut center_padded_kernel);
 
